@@ -1,6 +1,6 @@
 import openpyxl
 from openpyxl import *
-from openpyxl.styles import Font
+from openpyxl.styles import Font, PatternFill
 from datetime import datetime
 import os.path
 from tkinter import *
@@ -12,6 +12,9 @@ meses = {1: "Enero", 2: "Febrero", 3: "Marzo", 4: "Abril", 5: "Mayo", 6: "Junio"
          9: "Septiembre", 10: "Octubre", 11: "Noviembre", 12: "Diciembre"}
 
 blue = "#686bb0"
+fontName = "Montserrat Regular"
+fontNameBold = "Montserrat Bold"
+fontNameItalic = "Montserrat Italic"
 
 
 def obtenerHora():
@@ -30,19 +33,56 @@ def obtenerFecha():
 
 
 def prepararEncabezado(sheet):
-    # Hace que toda la primera fila sea negritas
-    header = ["A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1", "I1"]
-    for cell in header:
+    # Toooodas las celdas
+    sheet['A3'] = "ELABORO"
+
+    sheet['A6'] = "INGRESOS"
+    sheet['A7'] = "FOLIO"
+    sheet['B7'] = "PACIENTE"
+    sheet['C7'] = "MOTIVO"
+    sheet['D7'] = "EFECTIVO"
+    sheet['E7'] = "VAUCHER"
+
+    sheet['E2'] = "TOTAL EFECTIVO"
+    sheet['F2'] = "=SUM(D:D)"
+    sheet['E3'] = "TOTAL VAUCHER"
+    sheet['F3'] = "=SUM(E:E)"
+    sheet['E4'] = "TOTAL"
+    sheet['F4'] = "=F2+F3"
+
+    sheet['H3'] = "SALDO"
+    sheet['I3'] = "=F4-M3"
+
+    sheet['J6'] = "EGRESOS"
+    sheet['J7'] = "# VALE"
+    sheet['K7'] = "MOTIVO"
+    sheet['L7'] = "IMPORTE"
+
+    sheet['L3'] = "TOTAL PAGOS"
+    sheet['M3'] = "=SUM(L:L)"
+
+    # Hace a las celdas grises con texto blanco
+    titulos = ["A3", "A6", "A7", "B7", "C7", "D7", "E7", "E2", "E3", "E4", "H3", "J6", "J7", "K7", "L7", "L3"]
+    greyFill = PatternFill(start_color='404040', end_color='404040', fill_type='solid')
+    for cell in titulos:
         activeCell = sheet[cell]
-        activeCell.font = Font(bold=True)
-    sheet['A1'] = "Nombre"
-    sheet['B1'] = "Celular"
-    sheet['C1'] = "Correo Electrónico"
-    sheet['D1'] = "Código Postal"
-    sheet['E1'] = "Servicio"
-    sheet['F1'] = "Importe"
-    sheet['G1'] = "Hora"
-    sheet['H1'] = "Folio"
+        activeCell.font = Font(bold=True, color="FFFFFF")
+        activeCell.fill = greyFill
+
+    # Une celdas
+    sheet.merge_cells("A6:B6")
+    sheet.merge_cells("J6:K6")
+
+    # Ancho de columnas
+    sheet.column_dimensions['A'].width = 20.5
+    sheet.column_dimensions['B'].width = 32.5
+    sheet.column_dimensions['C'].width = 20.5
+    sheet.column_dimensions['D'].width = 14.17
+    sheet.column_dimensions['E'].width = 14.17
+    sheet.column_dimensions['K'].width = 32.5
+    sheet.column_dimensions['L'].width = 14.17
+
+    # TODO: Formato de número
 
 
 def conseguirDatos(botones):
@@ -53,13 +93,16 @@ def conseguirDatos(botones):
     return datos
 
 
+def limpiarDatos(datos):
+    datos[0] = datos[0].upper()  # Pasa el nombre a mayúsculas
+
+    datos[1] = datos[1].replace(" ", "")  # Se deshace de espacios y guiones en el núm. tel.
+    datos[1] = datos[1].replace("-", "")
+
+    datos[4] = datos[4].upper()  # Pasa el servicio a mayúsculas
+
+
 def datosSonValidos(datos):
-    datos[0] = datos[0].upper()                     # Pasa el nombre a mayúsculas
-
-    datos[1] = datos[1].replace(" ","")             # Se deshace de espacios y guiones en el núm. tel.
-    datos[1] = datos[1].replace("-","")
-
-    datos[4] = datos[4].upper()                     # Pasa el servicio a mayúsculas
 
     try:                                # Checa que el número telefónico sea un número
         int(datos[1])
@@ -94,6 +137,7 @@ def datosSonValidos(datos):
 
 def crearExcel(root, botones):
     datos = conseguirDatos(botones)
+    limpiarDatos(datos)
     if datosSonValidos(datos):                # Solo funciona si los datos están bien
 
         # Se obtienen datos de fecha y hora
@@ -114,7 +158,7 @@ def crearExcel(root, botones):
             prepararEncabezado(sheet)
 
         # Se crea el folio y se da formato a la fecha y hora
-        seriado = len(sheet['H'])
+        seriado = len(sheet['H'])-6                             # TODO: Folio seriado total?
         folio = "%03d-%04d%02d%02d%s" % (seriado, fecha[2], fecha[1], fecha[0], turno)
         stringHora = "%02d:%02d" % (hora[0], hora[1])
         stringFecha = "%02d/%02d/%02d" % (fecha[0], fecha[1], fecha[2])
@@ -152,12 +196,21 @@ def crearExcel(root, botones):
 
 def crearInfoVentana(root):
 
-    padx = 65
+    padx = 35
     pady = 20
 
-    fuenteLabels = font.Font(family="Arial", size=12)
-    fuenteMenu = font.Font(family="Arial", size=8)
-    fuenteBoton = font.Font(family="Arial", size=10)
+    fuenteTitulo = font.Font(font=(fontNameBold, 36))
+    fuenteSubtitulo = font.Font(font=(fontNameItalic, 24))
+    fuenteLabels = font.Font(font=(fontName, 14))
+    fuenteMenu = font.Font(font=(fontName, 10))
+    fuenteBoton = font.Font(font=(fontName, 12))
+
+    labelBienvenido = Label(root, text="¡Bienvenido!", font=fuenteTitulo)
+    labelSubtitulo = Label(root, text="Sistema de Corte de Caja Novus Médica", font=fuenteSubtitulo)
+    fecha = obtenerFecha()
+    hora = obtenerHora()
+    labelFechaHora = Label(root, text="La fecha de hoy es %d de %s. " % (fecha[0], meses[fecha[1]])
+                           + "La hora es %02d:%02d" % (hora[0], hora[1]), font=fuenteMenu)
 
     labelNombre = Label(root, text="Nombre:", font=fuenteLabels)
     nombre = Entry(root, width=85)
@@ -184,7 +237,6 @@ def crearInfoVentana(root):
     turnoDropPago = root.nametowidget(pagoMenu.menuname)
     turnoDropPago.config(font=fuenteMenu)
 
-
     labelCelular = Label(root, text="Número Celular:", font=fuenteLabels)
     celular = Entry(root, width=85)
 
@@ -201,33 +253,36 @@ def crearInfoVentana(root):
 
     boton = Button(root, text="Insertar", padx=10,
                    command=lambda: crearExcel(root, botones),
-                   bg=blue, fg="white", font=fuenteBoton, width=30, height=5)
+                   bg=blue, fg="black", font=fuenteBoton, width=20, height=4)
 
     # Insertar labels
-    labelNombre.grid(row=1, column=1, padx=padx, pady=pady, sticky="W")
-    nombre.grid(row=2, column=1, padx=padx, sticky="W")
-    labelTurno.grid(row=1, column=3, padx=padx, pady=pady, sticky="W")
-    turnoMenu.grid(row=2, column=3, padx=padx, sticky="W")
-    labelServicio.grid(row=4, column=1, padx=padx, pady=pady, sticky="W")
-    servicio.grid(row=5, column=1, padx=padx, sticky="W")
-    labelImporte.grid(row=4, column=3, padx=padx, pady=pady, sticky="W")
-    importe.grid(row=5, column=3, padx=padx, sticky="W")
-    labelPago.grid(row=7, column=3,padx=padx, sticky="W")
-    pagoMenu.grid(row=8, column=3,padx=padx, sticky="W")
-    labelCelular.grid(row=7, column=1, padx=padx, pady=pady, sticky="W")
-    celular.grid(row=8, column=1, padx=padx, sticky="W")
-    labelCP.grid(row=9, column=3, padx=padx, pady=pady, sticky="W")
-    CP.grid(row=10, column=3, padx=padx, sticky="W")
-    labelCorreo.grid(row=9, column=1, padx=padx, pady=pady, sticky="W")
-    correo.grid(row=10, column=1, padx=padx, sticky="W")
-    boton.grid(row=11, column=3, padx=padx, pady=40)
-    labelImagen.grid(row=11, column=1)
+    labelBienvenido.grid(row=0, column=1, padx=padx, pady=pady, sticky="W")
+    labelSubtitulo.grid(row=1, column=1, padx=padx, pady=10, sticky="W")
+    labelFechaHora.grid(row=12, column=1, padx=padx, pady=pady, sticky="SW")
+    labelNombre.grid(row=2, column=1, padx=padx, pady=pady, sticky="W")
+    nombre.grid(row=3, column=1, padx=padx, sticky="W")
+    labelTurno.grid(row=2, column=3, padx=padx, pady=pady, sticky="W")
+    turnoMenu.grid(row=3, column=3, padx=padx, sticky="W")
+    labelServicio.grid(row=5, column=1, padx=padx, pady=pady, sticky="W")
+    servicio.grid(row=6, column=1, padx=padx, sticky="W")
+    labelImporte.grid(row=5, column=3, padx=padx, pady=pady, sticky="W")
+    importe.grid(row=6, column=3, padx=padx, sticky="W")
+    labelPago.grid(row=8, column=3,padx=padx, sticky="W")
+    pagoMenu.grid(row=9, column=3,padx=padx, sticky="W")
+    labelCelular.grid(row=8, column=1, padx=padx, pady=pady, sticky="W")
+    celular.grid(row=9, column=1, padx=padx, sticky="W")
+    labelCP.grid(row=10, column=3, padx=padx, pady=pady, sticky="W")
+    CP.grid(row=11, column=3, padx=padx, sticky="W")
+    labelCorreo.grid(row=10, column=1, padx=padx, pady=pady, sticky="W")
+    correo.grid(row=11, column=1, padx=padx, sticky="W")
+    boton.grid(row=12, column=3, padx=padx, pady=45)
+    # labelImagen.grid(row=12, column=1)
 
 
 def main():
     # Se crea la ventana
     root = Tk()
-    root.title("Sistema de Corte de Caja Novus")
+    root.title("Sistema de Corte de Caja Novus Médica")
     root.iconbitmap('./img/caduceus.ico')
     crearInfoVentana(root)
     root.mainloop()
