@@ -1,12 +1,12 @@
+import os.path
+from datetime import datetime
+from tkinter import *
+from tkinter import font
+from tkinter import messagebox
 import openpyxl
+from PIL import ImageTk, Image
 from openpyxl import *
 from openpyxl.styles import Font, PatternFill
-from datetime import datetime
-import os.path
-from tkinter import *
-from tkinter import messagebox
-from tkinter import font
-from PIL import ImageTk, Image
 
 meses = {1: "Enero", 2: "Febrero", 3: "Marzo", 4: "Abril", 5: "Mayo", 6: "Junio", 7: "Julio", 8: "Agosto",
          9: "Septiembre", 10: "Octubre", 11: "Noviembre", 12: "Diciembre"}
@@ -210,7 +210,7 @@ def crearInfoVentana(root):
     fecha = obtenerFecha()
     hora = obtenerHora()
     labelFechaHora = Label(root, text="La fecha de hoy es %d de %s. " % (fecha[0], meses[fecha[1]])
-                           + "La hora es %02d:%02d" % (hora[0], hora[1]), font=fuenteMenu)
+                           + "La hora es %02d:%02d. (Versión 1.0)" % (hora[0], hora[1]), font=fuenteMenu)
 
     labelNombre = Label(root, text="Nombre:", font=fuenteLabels)
     nombre = Entry(root, width=85)
