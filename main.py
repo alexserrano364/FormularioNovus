@@ -3,18 +3,20 @@ from datetime import datetime
 from tkinter import *
 from tkinter import font
 from tkinter import messagebox
+
 import openpyxl
 from PIL import ImageTk, Image
 from openpyxl import *
 from openpyxl.styles import Font, PatternFill
 
+from docx import Document
+from docx.enum.section import WD_ORIENTATION
+
 meses = {1: "Enero", 2: "Febrero", 3: "Marzo", 4: "Abril", 5: "Mayo", 6: "Junio", 7: "Julio", 8: "Agosto",
          9: "Septiembre", 10: "Octubre", 11: "Noviembre", 12: "Diciembre"}
 
-blue = "#686bb0"
-fontName = "Montserrat Regular"
-fontNameBold = "Montserrat Bold"
-fontNameItalic = "Montserrat Italic"
+blue = "#6bd8f0"
+fontName = "Montserrat"
 
 
 def obtenerHora():
@@ -135,6 +137,37 @@ def datosSonValidos(datos):
     return True
 
 
+def crearEImprimirDocumento(datos):
+    document = Document()
+
+    pic = "./img/NovusLogo.jpeg"
+    style = document.styles['Normal']
+    font = style.font
+    font.name = 'Consolas'
+
+    section = document.sections[-1]
+    new_width, new_height = section.page_height, section.page_width
+    section.orientation = WD_ORIENTATION.LANDSCAPE
+    section.page_width = new_width
+    section.page_height = new_height
+    table = document.add_table(rows=1, cols=3)
+
+    for row in table.rows:
+        for cell in row.cells:
+            paragraph = cell.paragraphs[0]
+            run = paragraph.add_run()
+            run.add_picture(pic, height=1000000)
+            paragraph = cell.add_paragraph(("\n\nFOLIO: %s\n\n\n\n" +
+                                            "NOMBRE: %s\n\n\n\n" +
+                                            "SERVICIO: %s\n\n\n\n" +
+                                            "IMPORTE: %s\n\n\n\n" +
+                                            "FECHA: %s\n\n" +
+                                            "HORA: %s\n\n") % (datos[7], datos[0], datos[4], datos[5], datos[8], datos[6]))
+            paragraph.style = document.styles['Normal']
+    document.save("Ticket.docx")
+    os.startfile("Ticket.docx", "print")
+
+
 def crearExcel(root, botones):
     datos = conseguirDatos(botones)
     limpiarDatos(datos)
@@ -148,7 +181,7 @@ def crearExcel(root, botones):
 
         # Se crea el Excel del turno, si ya existe solo se carga
         turno = datos[6][:1]
-        title = 'Corte Caja %d de %s del %d - %s.xlsx' % (fecha[0], meses[fecha[1]], fecha[2], turno)
+        title = './Cortes de Caja/Corte Caja %d de %s del %d - %s.xlsx' % (fecha[0], meses[fecha[1]], fecha[2], turno)
         if os.path.exists(title):
             workbook = load_workbook(title)
             sheet = workbook.active
@@ -158,7 +191,7 @@ def crearExcel(root, botones):
             prepararEncabezado(sheet)
 
         # Se crea el folio y se da formato a la fecha y hora
-        seriado = len(sheet['H'])-6                             # TODO: Folio seriado total?
+        seriado = len(sheet['H'])-6
         folio = "%03d-%04d%02d%02d%s" % (seriado, fecha[2], fecha[1], fecha[0], turno)
         stringHora = "%02d:%02d" % (hora[0], hora[1])
         stringFecha = "%02d/%02d/%02d" % (fecha[0], fecha[1], fecha[2])
@@ -191,6 +224,7 @@ def crearExcel(root, botones):
         workbook.close()
 
         messagebox.showinfo("Éxito", "Datos agregados")
+        crearEImprimirDocumento(datos)
         root.quit()
 
 
@@ -199,8 +233,8 @@ def crearInfoVentana(root):
     padx = 35
     pady = 20
 
-    fuenteTitulo = font.Font(font=(fontNameBold, 36))
-    fuenteSubtitulo = font.Font(font=(fontNameItalic, 24))
+    fuenteTitulo = font.Font(bold=True, font=(fontName, 36))
+    fuenteSubtitulo = font.Font(italic=True, font=(fontName, 24))
     fuenteLabels = font.Font(font=(fontName, 14))
     fuenteMenu = font.Font(font=(fontName, 10))
     fuenteBoton = font.Font(font=(fontName, 12))
